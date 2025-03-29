@@ -1,11 +1,18 @@
+import re
 import numpy
 
+def text_preprocess(text : str) :
+    text = re.sub(r"[^0-9a-zA-Z가-힣]",repl=" ",string=text.lower())
+    text = re.sub(r"[0-9]",repl="N",string=text)
+    return text
+    
 def make_dict(sentences : list, word_dict : dict = None) :
-    data = " ".join(sentences).lower().replace("."," .").split()
+    data = " ".join(sentences)
+    data = text_preprocess(data).split()
     if word_dict is None :
         word_dict = {}
-        word_dict["<eos>"] = 0
-        word_dict["<unk>"] = 1
+        word_dict["<pad>"] = 0 #패딩
+        word_dict["<unk>"] = 1 #없는 단어
     for w in data :
         if w not in word_dict :
             word_dict[w] = len(word_dict)
@@ -17,14 +24,14 @@ def word_num_encoding(sentences : list, word_dict : dict, unk : str = "<unk>") :
     corpus = []
     max_len = 0
     for s in sentences :
-        s = s.lower().replace("."," .").split()
+        s = text_preprocess(s).split()
         max_len = max(max_len, len(s))
     for s in sentences :
         s_array = []
-        s = s.lower().replace("."," .").split()
+        s = text_preprocess(s).split()
         for i in range(max_len) :
             if len(s) <= i :
-                s_array.append(-1)
+                s_array.append(0)
                 continue
             try :
                 s_array.append(word_dict[s[i]])
@@ -38,14 +45,13 @@ def make_comatrix(corpus, word_size, window_size = 1) :
     comatrix = numpy.zeros(shape = (word_size, word_size))
     for s in corpus :
         for w in range(len(s)) :
-            if s[w] < 0 :
+            if s[w] <= 0 :
                 break
             for i in range(1,window_size+1) :
                 if w-i >= 0 :
-                    if s[w-i] >= 0 :
-                        comatrix[s[w], s[w-i]] += 1
+                    comatrix[s[w], s[w-i]] += 1
                 if w+i < len(s) :
-                    if s[w+i] >= 0  :
+                    if s[w+i] > 0  :
                         comatrix[s[w], s[w+i]] += 1
     return comatrix
 
@@ -90,8 +96,22 @@ def make_pmi(comatrix, verdose = False) :
 
             if verdose :
                 cnt += 1
-                if j+1 == P.shape[1] :
+                if cnt % (total // 100 + 1)== 0 :
                     print("%.1f%% 완료" %(100*cnt/total))
-    print("!!계산 완료!!")
     
-    return P  
+    return P   
+
+def make_word_pair(corpus, window_size = 1) :
+    word_pair = []
+    for s in corpus :
+        for w in range(len(s)) :
+            for i in range(1,window_size+1) :
+                if w-i >= 0 :
+                    temp = [s[w], s[w-i]]
+                    word_pair.append(temp)
+                if w+i < len(s) :
+                    if s[w+i] > 0 :
+                        temp = [s[w], s[w+i]]
+                        word_pair.append(temp)
+    
+    return word_pair
