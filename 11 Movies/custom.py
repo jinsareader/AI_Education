@@ -4,6 +4,7 @@ import numpy
 def text_preprocess(text : str) :
     text = re.sub(r"[^0-9a-zA-Z가-힣]",repl=" ",string=text.lower())
     text = re.sub(r"[0-9]+",repl="N",string=text)
+    text = re.sub(r"\s+",repl=" ",string=text)
     return text
     
 def make_dict(sentences : list, word_dict : dict = None) :
