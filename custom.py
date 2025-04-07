@@ -2,11 +2,17 @@ import re
 import numpy
 
 def text_preprocess(text : str) :
-    text = re.sub(r"[^0-9a-zA-Z가-힣]",repl=" ",string=text.lower())
+    text = re.sub(r"[^0-9a-zA-Z]",repl=" ",string=text.lower())
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     return text
-    
+
+def text_preprocess_kor(text : str) :
+    text = re.sub(r"[^가-힣]",repl=" ",string=text.lower())
+    text = re.sub(r"[0-9]+",repl="N",string=text)
+    text = re.sub(r"\s+",repl=" ",string=text)
+    return text 
+
 def make_dict(sentences : list, word_dict : dict = None) :
     data = " ".join(sentences)
     data = text_preprocess(data).split()
@@ -116,3 +122,18 @@ def make_word_pair(corpus, window_size = 1) :
                         word_pair.append(temp)
     
     return word_pair
+
+def word_vectorize(sentences : list, vec_dict : dict, word_len : int) :
+    x = []
+    for s in sentences :
+        temp = []
+        words = str(s).split()
+        for i in range(word_len - len(words)) :
+            temp.append(vec_dict["<pad>"])
+        for i in range(len(words)) :
+            if words[i] not in vec_dict :
+                temp.append(vec_dict["<unk>"])
+                continue
+            temp.append(vec_dict[words[i]])
+        x.append(temp)
+    return x
