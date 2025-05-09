@@ -2,16 +2,26 @@ import re
 import numpy
 
 def text_preprocess(text : str) :
-    text = re.sub(r"[^0-9a-zA-Z]",repl=" ",string=text.lower())
+    text = re.sub(r"[^0-9a-zA-Z]",repl=" ",string=text.lower().replace("n't"," not"))
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     return text
 
 def text_preprocess_kor(text : str) :
-    text = re.sub(r"[^가-힣]",repl=" ",string=text.lower())
+    text = re.sub(r"[^가-힣ㄱ-ㅎㅏ-ㅣ]",repl=" ",string=text.lower())
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     return text 
+
+def del_stopword(text : str, stopword : list) :
+    text = text.split()
+    for i in range(len(text)) :
+        for w in stopword :
+            if text[i] == w:
+                text[i] = ""
+    text = " ".join(text)
+    text = re.sub(r"\s+",repl=" ",string=text)
+    return text
 
 def make_dict(sentences : list, word_dict : dict = None) :
     data = " ".join(sentences)
