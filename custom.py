@@ -7,8 +7,11 @@ def text_preprocess(text : str) :
     text = re.sub(r"\s+",repl=" ",string=text)
     return text
 
-def text_preprocess_kor(text : str) :
-    text = re.sub(r"[^가-힣ㄱ-ㅎㅏ-ㅣ]",repl=" ",string=text.lower())
+def text_preprocess_kor(text : str, chosung : bool = False) :
+    if chosung :
+        text = re.sub(r"[^가-힣ㄱ-ㅎ]",repl=" ",string=text.lower())
+    else :
+        text = re.sub(r"[^가-힣]",repl=" ",string=text.lower())
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     return text 
