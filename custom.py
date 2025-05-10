@@ -133,7 +133,7 @@ def make_word_pair(corpus, window_size = 1) :
     
     return word_pair
 
-def word_vectorize(sentence : [str,list], vec_dict : dict, word_len : [int, None] = None) :
+def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None = None) :
     temp = []
     
     if type(sentence) == str : 
