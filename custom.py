@@ -1,5 +1,6 @@
 import re
 import numpy
+from tqdm import tqdm
 
 def text_preprocess(text : str) :
     text = re.sub(r"[^0-9a-zA-Z]",repl=" ",string=text.lower().replace("n't"," not"))
@@ -9,9 +10,9 @@ def text_preprocess(text : str) :
 
 def text_preprocess_kor(text : str, chosung : bool = False) :
     if chosung :
-        text = re.sub(r"[^가-힣ㄱ-ㅎ]",repl=" ",string=text.lower())
+        text = re.sub(r"[^가-힣ㄱ-ㅎ]",repl=" ",string=text)
     else :
-        text = re.sub(r"[^가-힣]",repl=" ",string=text.lower())
+        text = re.sub(r"[^가-힣]",repl=" ",string=text)
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     return text 
@@ -106,19 +107,15 @@ def make_pmi(comatrix, verdose = False) :
     S = numpy.sum(comatrix, axis = 0)
     eps = 1e-15
     
-    cnt = 0
-    total = P.shape[0] * P.shape[1]
-    
-    for i in range(P.shape[0]) :
+    if verdose :
+        li = tqdm(range(P.shape[0]))
+    else :
+        li = range(P.shape[0])
+        
+    for i in li :
         for j in range(P.shape[1]) :
             pmi = numpy.log2(comatrix[i, j] * N / (S[i]*S[j] + eps) + eps)
             P[i,j] = max(0, pmi)
-
-            if verdose :
-                cnt += 1
-                if cnt % (total // 100 + 1)== 0 :
-                    print("%.1f%% 완료" %(100*cnt/total))
-    
     return P   
 
 def make_word_pair(corpus, window_size = 1) :
@@ -136,17 +133,22 @@ def make_word_pair(corpus, window_size = 1) :
     
     return word_pair
 
-def word_vectorize(sentences : list, vec_dict : dict, word_len : int) :
-    x = []
-    for s in sentences :
-        temp = []
-        words = str(s).split()
-        for i in range(word_len - len(words)) :
-            temp.append(vec_dict["<pad>"])
-        for i in range(len(words)) :
-            if words[i] not in vec_dict :
-                temp.append(vec_dict["<unk>"])
-                continue
-            temp.append(vec_dict[words[i]])
-        x.append(temp)
-    return x
+def word_vectorize(sentence : [str,list], vec_dict : dict, word_len : [int, None] = None) :
+    temp = []
+    
+    if type(sentence) == str : 
+        words = str(sentence).split()
+    else :
+        words = sentence
+    if word_len is None :
+        word_len = len(sentence)
+        
+    for i in range(word_len - len(words)) :
+        temp.append(vec_dict["<pad>"])
+    for i in range(len(words)) :
+        if words[i] not in vec_dict :
+            temp.append(vec_dict["<unk>"])
+            continue
+        temp.append(vec_dict[words[i]])
+
+    return temp
