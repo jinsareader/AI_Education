@@ -2,17 +2,24 @@ import re
 import numpy
 from tqdm import tqdm
 
-def text_preprocess(text : str) :
-    text = re.sub(r"[^0-9a-zA-Z]",repl=" ",string=text.lower().replace("n't"," not"))
+def text_preprocess(text : str, end_mark : bool = False) :
+    target = r"[^0-9a-zA-Z"
+    if end_mark :
+        target += r"!?"
+    target += r"]"
+    text = re.sub(target,repl=" ",string=text.lower().replace("n't"," not"))
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     return text
 
-def text_preprocess_kor(text : str, chosung : bool = False) :
+def text_preprocess_kor(text : str, end_mark : bool = False, chosung : bool = False) :
+    target = r"[^가-힣"
+    if end_mark :
+        target += r"!?"
     if chosung :
-        text = re.sub(r"[^가-힣ㄱ-ㅎ]",repl=" ",string=text)
-    else :
-        text = re.sub(r"[^가-힣]",repl=" ",string=text)
+        target += r"ㄱ-ㅎ"
+    target += r"]"
+    text = re.sub(target,repl=" ",string=text)
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     return text 
