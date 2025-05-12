@@ -5,13 +5,12 @@ from tqdm import tqdm
 def text_preprocess(text : str, end_mark : bool = False) :
     target = r"[^0-9a-zA-Z"
     if end_mark :
-        target += r",!\?\."
+        target += r"!\?\."
     target += r"]"
     text = re.sub(target,repl=" ",string=text.lower().replace("n't"," not"))
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     if end_mark :
-        text = re.sub(r",+",repl=r",",string=text)
         text = re.sub(r"!+",repl=r"!",string=text)
         text = re.sub(r"\?+",repl=r"?",string=text)
         text = re.sub(r"\.+",repl=r".",string=text)
@@ -20,7 +19,7 @@ def text_preprocess(text : str, end_mark : bool = False) :
 def text_preprocess_kor(text : str, end_mark : bool = False, chosung : bool = False) :
     target = r"[^가-힣"
     if end_mark :
-        target += r",!\?\."
+        target += r"!\?\."
     if chosung :
         target += r"ㄱ-ㅎ"
     target += r"]"
@@ -28,7 +27,6 @@ def text_preprocess_kor(text : str, end_mark : bool = False, chosung : bool = Fa
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     if end_mark :
-        text = re.sub(r",+",repl=r",",string=text)
         text = re.sub(r"!+",repl=r"!",string=text)
         text = re.sub(r"\?+",repl=r"?",string=text)
         text = re.sub(r"\.+",repl=r".",string=text)
