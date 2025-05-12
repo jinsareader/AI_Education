@@ -155,10 +155,9 @@ def make_word_pair(comatrix) :
     rows = comatrix.shape[0]
     cols = comatrix.shape[1]
     for r in range(rows) :
-        for c in range(r+1,cols) :
+        for c in range(cols) :
             if comatrix[r][c] > 0 :
                 word_pair.append([r,c])
-                word_pair.append([c,r])
         
     return numpy.array(word_pair)
 
