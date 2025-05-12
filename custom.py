@@ -66,14 +66,17 @@ def make_comatrix(corpus, word_size, window_size = 1) :
     comatrix = numpy.zeros(shape = (word_size, word_size))
     for s in corpus :
         for w in range(len(s)) :
-            if s[w] <= 0 :
-                break
+            if s[w] == 0 :
+                continue
             for i in range(1,window_size+1) :
                 if w-i >= 0 :
+                    if s[w-i] == 0  :
+                        continue
                     comatrix[s[w], s[w-i]] += 1
                 if w+i < len(s) :
-                    if s[w+i] > 0  :
-                        comatrix[s[w], s[w+i]] += 1
+                    if s[w+i] == 0  :
+                        continue
+                    comatrix[s[w], s[w+i]] += 1
     return comatrix
 
 def cos_similarity(x, y) :
@@ -123,15 +126,20 @@ def make_word_pair(corpus, window_size = 1) :
     for s in corpus :
         for w in range(len(s)) :
             for i in range(1,window_size+1) :
+                if s[w] == 0 :
+                    continue
                 if w-i >= 0 :
+                    if s[w-i] == 0 :
+                        continue
                     temp = [s[w], s[w-i]]
                     word_pair.append(temp)
                 if w+i < len(s) :
-                    if s[w+i] > 0 :
-                        temp = [s[w], s[w+i]]
-                        word_pair.append(temp)
+                    if s[w+i] == 0 :
+                        continue
+                    temp = [s[w], s[w+i]]
+                    word_pair.append(temp)
     
-    return word_pair
+    return numpy.array(word_pair)
 
 def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None = None) :
     temp = []
