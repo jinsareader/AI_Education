@@ -98,19 +98,33 @@ def cos_similarity(x, y) :
     eps = 1e-15
     return numpy.dot(x,y) / (numpy.linalg.norm(x)*numpy.linalg.norm(y) + eps)
 
-def most_similiar(query, word_dict, number_dict, comatrix, top = 5) :
+def euc_distance(x, y) :
+    return numpy.sqrt(numpy.sum((x - y) ** 2))
+
+def most_similiar(query, word_dict, number_dict, vector_array, top = 5, mode : str = "euc") :
     if query not in word_dict :
         print("{}(이)가 사전에 존재하지 않습니다.".format(query))
         return
 
     word_size = len(word_dict)
     similiar = numpy.zeros(shape = (word_size))
-    for i in range(word_size) :
-        similiar[i] = cos_similarity(comatrix[word_dict[query]], comatrix[i])
-
+    if mode.lower() == "euc" :
+        for i in range(word_size) :
+            similiar[i] = euc_distance(vector_array[word_dict[query]], vector_array[i])
+    elif mode.lower() == "cos" :
+        for i in range(word_size) :
+            similiar[i] = cos_similarity(vector_array[word_dict[query]], vector_array[i])
+    else :
+        print("{}는 잘못된 모드입니다. 모드 종류 : 'euc', 'cos'".format(mode))
+        return
+    
     print("검색어 ||",query)
     cnt = 0
-    for i in (-1 * similiar).argsort() :
+    if mode.lower() == "euc" :
+        argsort = similiar.argsort()
+    elif mode.lower() == "cos" :
+        argsort = (-1 * similiar).argsort()
+    for i in argsort :
         if number_dict[i] == query :
             continue
         print("{} : {}".format(number_dict[i], similiar[i]))
@@ -136,24 +150,16 @@ def make_pmi(comatrix, verdose = False) :
             P[i,j] = max(0, pmi)
     return P   
 
-def make_word_pair(corpus, window_size = 1) :
+def make_word_pair(comatrix) :
     word_pair = []
-    for s in corpus :
-        for w in range(len(s)) :
-            for i in range(1,window_size+1) :
-                if s[w] == 0 :
-                    continue
-                if w-i >= 0 :
-                    if s[w-i] == 0 :
-                        continue
-                    temp = [s[w], s[w-i]]
-                    word_pair.append(temp)
-                if w+i < len(s) :
-                    if s[w+i] == 0 :
-                        continue
-                    temp = [s[w], s[w+i]]
-                    word_pair.append(temp)
-    
+    rows = comatrix.shape[0]
+    cols = comatrix.shape[1]
+    for r in range(rows) :
+        for c in range(r+1,cols) :
+            if comatrix[r][c] > 0 :
+                word_pair.append([r,c])
+                word_pair.append([c,r])
+        
     return numpy.array(word_pair)
 
 def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None = None) :
