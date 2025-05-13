@@ -173,7 +173,7 @@ def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None
         
     for i in range(word_len - len(words)) :
         temp.append(vec_dict["<pad>"])
-    for i in range(len(words)) :
+    for i in range(min(word_len,len(words))) :
         if words[i] not in vec_dict :
             temp.append(vec_dict["<unk>"])
             continue
