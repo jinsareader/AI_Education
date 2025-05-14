@@ -169,7 +169,7 @@ def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None
     else :
         words = sentence
     if word_len is None :
-        word_len = len(sentence)
+        word_len = len(words)
         
     for i in range(word_len - len(words)) :
         temp.append(vec_dict["<pad>"])
