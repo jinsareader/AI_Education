@@ -77,19 +77,19 @@ def word_num_encoding(sentences : list, word_dict : dict, unk : str = "<unk>") :
     corpus = numpy.array(corpus)    
     return corpus
 
-def make_comatrix(corpus, word_size, window_size = 1) :
+def make_comatrix(corpus, word_size, window_size = 1, pad_idx : int = 0) :
     comatrix = numpy.zeros(shape = (word_size, word_size))
     for s in corpus :
         for w in range(len(s)) :
-            if s[w] == 0 :
+            if s[w] == pad_idx :
                 continue
             for i in range(1,window_size+1) :
                 if w-i >= 0 :
-                    if s[w-i] == 0  :
+                    if s[w-i] == pad_idx  :
                         continue
                     comatrix[s[w], s[w-i]] += 1
                 if w+i < len(s) :
-                    if s[w+i] == 0  :
+                    if s[w+i] == pad_idx  :
                         continue
                     comatrix[s[w], s[w+i]] += 1
     return comatrix
@@ -161,7 +161,7 @@ def make_word_pair(comatrix) :
         
     return numpy.array(word_pair)
 
-def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None = None) :
+def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None = None, padding_front = True, pad_word : str = "<pad>", unk_word : str = "<unk>") :
     temp = []
     
     if type(sentence) == str : 
@@ -170,13 +170,19 @@ def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None
         words = sentence
     if word_len is None :
         word_len = len(words)
-        
-    for i in range(word_len - len(words)) :
-        temp.append(vec_dict["<pad>"])
+
+    if padding_front :
+        for i in range(word_len - len(words)) :
+            temp.append(vec_dict[pad_word])
+            
     for i in range(min(word_len,len(words))) :
         if words[i] not in vec_dict :
-            temp.append(vec_dict["<unk>"])
+            temp.append(vec_dict[unk_word])
             continue
         temp.append(vec_dict[words[i]])
+        
+    if not padding_front :
+        for i in range(word_len - len(words)) :
+            temp.append(vec_dict[pad_word])
 
     return temp
