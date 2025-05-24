@@ -238,7 +238,7 @@ def text_to_label(text : str) :
     label = numpy.array(label)
     return label
 
-def label_to_text(label, special_threshold = 0.5) :
+def label_to_text(label) :
     text = ""
     spe_ = ['<not>','<pad>','<unk>',' ','.','!','?']
     
