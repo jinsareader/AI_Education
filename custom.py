@@ -215,22 +215,16 @@ def get_unk_words(sentence : str | list, vec_dict : dict) :
 def text_to_label(text : str) :
     label = []
     chars = list(text)
+    spe_ = ['<not>','<pad>','<unk>',' ','.','!','?']
     for c in chars :
-        encoding = numpy.zeros(74)
-        if c in [' ','.','!','?'] :
-            if c == ' ' :
-                encoding[68] += 1
-            if c == '.' :
-                encoding[69] += 1
-            if c == '!' :
-                encoding[70] += 1
-            if c == '?' :
-                encoding[71] += 1
+        encoding = numpy.zeros(68+len(spe_))
+        if c in spe_ :
+            encoding[spe_.index(c) + 68] += 1
             label.append(encoding)
             continue
         value = ord(c) - 0xAC00
         if value < 0 or value >= 19*21*28 :
-            encoding[72] += 1
+            encoding[spe_.index('<unk>') + 68] += 1
             label.append(encoding)
             continue
         jong_ = value % 28
@@ -239,17 +233,18 @@ def text_to_label(text : str) :
         encoding[cho_] += 1
         encoding[jung_+19] += 1
         encoding[jong_+40] += 1
+        encoding[spe_.index('<not>')+68] += 1 #특문이 아님을 표시
         label.append(encoding)
     label = numpy.array(label)
     return label
 
-def label_to_text(label) :
+def label_to_text(label, special_threshold = 0.5) :
     text = ""
-    spe_ = [' ','.','!','?','<unk>','<pad>']
+    spe_ = ['<not>','<pad>','<unk>',' ','.','!','?']
     
     for v in label :
-        idx_ = numpy.argmax(v[68:74], axis = -1).item()
-        if v[68:74][idx_] != 0 :
+        idx_ = numpy.argmax(v[68:68+len(spe_)], axis = -1).item()
+        if idx_ != spe_.index('<not>') : # 특문일 경우 (<not>)
             text += spe_[idx_]
             continue
             
@@ -260,3 +255,4 @@ def label_to_text(label) :
         value = (cho_ * 21 + jung_) * 28 + jong_ + 0xAC00
         text += chr(value)   
     return text
+    
