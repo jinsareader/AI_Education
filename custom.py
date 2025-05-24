@@ -186,3 +186,15 @@ def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None
             temp.append(vec_dict[pad_word])
 
     return temp
+
+def get_unk_words(sentence : str | list, vec_dict : dict) :
+    unk_list = []
+    if type(sentence) == str : 
+        words = str(sentence).split()
+    else :
+        words = sentence
+    for w in words :
+        if w not in vec_dict :
+            unk_list.append(w)
+    
+    return unk_list
