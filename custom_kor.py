@@ -1,4 +1,5 @@
 from konlpy.tag import Kkma as word_div
+from kiwipiepy import Kiwi
 import threading
 
 class Preprocessor() :

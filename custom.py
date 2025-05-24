@@ -1,7 +1,9 @@
 import re
 import numpy
+import numpy as np
 from tqdm import tqdm
 
+#영어 문장 전처리 함수
 def text_preprocess(text : str, end_mark : bool = False) :
     target = r"[^0-9a-zA-Z"
     if end_mark :
@@ -16,6 +18,7 @@ def text_preprocess(text : str, end_mark : bool = False) :
         text = re.sub(r"\.+",repl=r".",string=text)
     return text
 
+#한글 문장 전처리 함수
 def text_preprocess_kor(text : str, end_mark : bool = False, chosung : bool = False) :
     target = r"[^가-힣"
     if end_mark :
@@ -32,6 +35,7 @@ def text_preprocess_kor(text : str, end_mark : bool = False, chosung : bool = Fa
         text = re.sub(r"\.+",repl=r".",string=text)
     return text 
 
+#불용어 삭제 함수
 def del_stopword(text : str, stopword : list) :
     text = text.split()
     for i in range(len(text)) :
@@ -42,6 +46,7 @@ def del_stopword(text : str, stopword : list) :
     text = re.sub(r"\s+",repl=" ",string=text)
     return text
 
+#단어-라벨링 사전 생성 함수
 def make_dict(sentences : list, word_dict : dict = None) :
     data = " ".join(sentences)
     data = text_preprocess(data).split()
@@ -55,6 +60,7 @@ def make_dict(sentences : list, word_dict : dict = None) :
     number_dict = {i : w for w, i in word_dict.items()}
     return word_dict, number_dict
 
+# 단어 라벨링 함수 (LSA, Word2Vec 용)
 def word_num_encoding(sentences : list, word_dict : dict, unk : str = "<unk>") :
     word_size = len(word_dict)
     corpus = []
@@ -77,6 +83,7 @@ def word_num_encoding(sentences : list, word_dict : dict, unk : str = "<unk>") :
     corpus = numpy.array(corpus)    
     return corpus
 
+#인접 단어 표현하는 행렬 출력 함수
 def make_comatrix(corpus, word_size, window_size = 1, pad_idx : int = 0) :
     comatrix = numpy.zeros(shape = (word_size, word_size))
     for s in corpus :
@@ -94,18 +101,21 @@ def make_comatrix(corpus, word_size, window_size = 1, pad_idx : int = 0) :
                     comatrix[s[w], s[w+i]] += 1
     return comatrix
 
+#벡터별 유사도 : 코사인 유사도
 def cos_similarity(x, y) :
     eps = 1e-15
     return numpy.dot(x,y) / (numpy.linalg.norm(x)*numpy.linalg.norm(y) + eps)
-
+#벡터별 유사도 : 유클리디안 거리
 def euc_distance(x, y) :
     return numpy.sqrt(numpy.sum((x - y) ** 2))
-
-def most_similiar(query, word_dict, number_dict, vector_array, top = 5, mode : str = "euc") :
+#벡터별 유사도 상위 X개 출력
+def most_similiar(query, word_dict, number_dict, vector_array, top = 5, mode : str = "cos") :
     if query not in word_dict :
-        print("{}(이)가 사전에 존재하지 않습니다.".format(query))
-        return
+        raise Exception("{}(이)가 사전에 존재하지 않습니다.".format(query))
+    if mode.lower() not in ["euc","cos"] :
+        raise Exception("{}는 잘못된 모드입니다. 모드 종류 : 'euc', 'cos'".format(mode))
 
+    result = []
     word_size = len(word_dict)
     similiar = numpy.zeros(shape = (word_size))
     if mode.lower() == "euc" :
@@ -114,11 +124,7 @@ def most_similiar(query, word_dict, number_dict, vector_array, top = 5, mode : s
     elif mode.lower() == "cos" :
         for i in range(word_size) :
             similiar[i] = cos_similarity(vector_array[word_dict[query]], vector_array[i])
-    else :
-        print("{}는 잘못된 모드입니다. 모드 종류 : 'euc', 'cos'".format(mode))
-        return
-    
-    print("검색어 ||",query)
+
     cnt = 0
     if mode.lower() == "euc" :
         argsort = similiar.argsort()
@@ -127,12 +133,14 @@ def most_similiar(query, word_dict, number_dict, vector_array, top = 5, mode : s
     for i in argsort :
         if number_dict[i] == query :
             continue
-        print("{} : {}".format(number_dict[i], similiar[i]))
+        temp = (number_dict[i], similiar[i])
+        result.append(temp)
         cnt += 1
         if cnt >= top :
             break
-    print("")
+    return result
 
+#점별 상호의존도(PMI) 생성 함수 (LSA 용)
 def make_pmi(comatrix, verdose = False) :
     P = numpy.zeros_like(comatrix)
     N = numpy.sum(comatrix)
@@ -150,6 +158,7 @@ def make_pmi(comatrix, verdose = False) :
             P[i,j] = max(0, pmi)
     return P   
 
+#인접 단어쌍 List 만들어주는 함수 (Word2Vec 용)
 def make_word_pair(comatrix) :
     word_pair = []
     rows = comatrix.shape[0]
@@ -161,6 +170,7 @@ def make_word_pair(comatrix) :
         
     return numpy.array(word_pair)
 
+#문장의 단어를 벡터로 바꿔주는 함수 (문장별 동작)
 def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None = None, padding_front = True, pad_word : str = "<pad>", unk_word : str = "<unk>") :
     temp = []
     
@@ -187,6 +197,7 @@ def word_vectorize(sentence : str | list, vec_dict : dict, word_len : int | None
 
     return temp
 
+#벡터 사전에 없는 단어 출력하는 함수 (문장별 동작)
 def get_unk_words(sentence : str | list, vec_dict : dict) :
     unk_list = []
     if type(sentence) == str : 
@@ -198,3 +209,54 @@ def get_unk_words(sentence : str | list, vec_dict : dict) :
             unk_list.append(w)
     
     return unk_list
+
+
+# 한글 음절단위 변환 작업 함수들 (문장별 동작)
+def text_to_label(text : str) :
+    label = []
+    chars = list(text)
+    for c in chars :
+        encoding = numpy.zeros(74)
+        if c in [' ','.','!','?'] :
+            if c == ' ' :
+                encoding[68] += 1
+            if c == '.' :
+                encoding[69] += 1
+            if c == '!' :
+                encoding[70] += 1
+            if c == '?' :
+                encoding[71] += 1
+            label.append(encoding)
+            continue
+        value = ord(c) - 0xAC00
+        if value < 0 or value >= 19*21*28 :
+            encoding[72] += 1
+            label.append(encoding)
+            continue
+        jong_ = value % 28
+        jung_ = (value // 28) % 21
+        cho_  = (value // 28) // 21
+        encoding[cho_] += 1
+        encoding[jung_+19] += 1
+        encoding[jong_+40] += 1
+        label.append(encoding)
+    label = numpy.array(label)
+    return label
+
+def label_to_text(label) :
+    text = ""
+    spe_ = [' ','.','!','?','<unk>','<pad>']
+    
+    for v in label :
+        idx_ = numpy.argmax(v[68:74], axis = -1).item()
+        if v[68:74][idx_] != 0 :
+            text += spe_[idx_]
+            continue
+            
+        cho_  = numpy.argmax(v[0:19], axis = -1).item()
+        jung_ = numpy.argmax(v[19:40], axis = -1).item()
+        jong_ = numpy.argmax(v[40:68], axis = -1).item()
+        
+        value = (cho_ * 21 + jung_) * 28 + jong_ + 0xAC00
+        text += chr(value)   
+    return text
