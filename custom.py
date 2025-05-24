@@ -244,6 +244,8 @@ def label_to_text(label) :
     
     for v in label :
         idx_ = numpy.argmax(v[68:68+len(spe_)], axis = -1).item()
+        if idx_ == spe_.index('<pad>') : # 패딩 문자일 경우
+            break
         if idx_ != spe_.index('<not>') : # 특문일 경우 (<not>)
             text += spe_[idx_]
             continue
