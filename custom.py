@@ -13,8 +13,8 @@ def text_preprocess(text : str, end_mark : bool = False) :
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     if end_mark :
-        text = re.sub(r"!+",repl=r"!",string=text)
-        text = re.sub(r"\?+",repl=r"?",string=text)
+        text = re.sub(r"\.*!+\.*",repl=r"!",string=text)
+        text = re.sub(r"\.*\?+\.*",repl=r"?",string=text)
         text = re.sub(r"\.+",repl=r".",string=text)
     return text
 
@@ -30,8 +30,8 @@ def text_preprocess_kor(text : str, end_mark : bool = False, chosung : bool = Fa
     text = re.sub(r"[0-9]+",repl="N",string=text)
     text = re.sub(r"\s+",repl=" ",string=text)
     if end_mark :
-        text = re.sub(r"!+",repl=r"!",string=text)
-        text = re.sub(r"\?+",repl=r"?",string=text)
+        text = re.sub(r"\.*!+\.*",repl=r"!",string=text)
+        text = re.sub(r"\.*\?+\.*",repl=r"?",string=text)
         text = re.sub(r"\.+",repl=r".",string=text)
     return text 
 
@@ -211,7 +211,7 @@ def get_unk_words(sentence : str | list, vec_dict : dict) :
     return unk_list
 
 
-# 한글 음절단위 변환 작업 함수들 (문장별 동작)
+# 한글 음절단위 변환 작업 함수, 문장 -> 라벨 (문장별 동작)
 def korean_encoding(text : str) :
     label = []
     chars = list(text)
@@ -245,7 +245,7 @@ def korean_encoding(text : str) :
         
     label = numpy.array(label).astype(numpy.int64)
     return label
-
+# 한글 음절단위 변환 작업 함수, 라벨 -> 문장 (문장별 동작)
 def korean_decoding(label) :
     if len(label) % 3 != 0 :
         raise Exception("data is corrupted!")
