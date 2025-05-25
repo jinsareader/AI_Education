@@ -212,49 +212,58 @@ def get_unk_words(sentence : str | list, vec_dict : dict) :
 
 
 # 한글 음절단위 변환 작업 함수들 (문장별 동작)
-def text_to_label(text : str) :
+def korean_encoding(text : str) :
     label = []
     chars = list(text)
-    spe_ = ['<not>','<pad>','<unk>',' ','.','!','?']
-    for c in chars :
-        encoding = numpy.zeros(68+len(spe_))
-        if c in spe_ :
-            encoding[spe_.index(c) + 68] += 1
-            label.append(encoding)
-            continue
-        value = ord(c) - 0xAC00
-        if value < 0 or value >= 19*21*28 :
-            encoding[spe_.index('<unk>') + 68] += 1
-            label.append(encoding)
-            continue
-        jong_ = value % 28
-        jung_ = (value // 28) % 21
-        cho_  = (value // 28) // 21
-        encoding[cho_] += 1
-        encoding[jung_+19] += 1
-        encoding[jong_+40] += 1
-        encoding[spe_.index('<not>')+68] += 1 #특문이 아님을 표시
-        label.append(encoding)
-    label = numpy.array(label)
-    return label
-
-def label_to_text(label) :
-    text = ""
-    spe_ = ['<not>','<pad>','<unk>',' ','.','!','?']
-    
-    for v in label :
-        idx_ = numpy.argmax(v[68:68+len(spe_)], axis = -1).item()
-        if idx_ == spe_.index('<pad>') : # 패딩 문자일 경우
-            break
-        if idx_ != spe_.index('<not>') : # 특문일 경우 (<not>)
-            text += spe_[idx_]
+    spe_ = ['<unk>',' ','.','!','?','','','','']
+    for c in chars :        
+        if c in spe_:
+            cho  = spe_.index(c) + 19 + 1
+            jung = 1
+            jong = 1
+            label.append(cho)
+            label.append(jung)
+            label.append(jong)
             continue
             
-        cho_  = numpy.argmax(v[0:19], axis = -1).item()
-        jung_ = numpy.argmax(v[19:40], axis = -1).item()
-        jong_ = numpy.argmax(v[40:68], axis = -1).item()
+        value = ord(c) - 0xAC00
+        if value < 0 or value >= 19*21*28 :
+            cho  = spe_.index('<unk>') + 19 + 1
+            jung = 1
+            jong = 1
+            label.append(cho)
+            label.append(jung)
+            label.append(jong)
+            continue
+            
+        jong = value % 28 + 1
+        jung = (value // 28) % 21 + 1
+        cho  = (value // 28) // 21 + 1
+        label.append(cho)
+        label.append(jung)
+        label.append(jong)
         
-        value = (cho_ * 21 + jung_) * 28 + jong_ + 0xAC00
+    label = numpy.array(label).astype(numpy.int64)
+    return label
+
+def korean_decoding(label) :
+    if len(label) % 3 != 0 :
+        raise Exception("data is corrupted!")
+    
+    text = ""
+    spe_ = ['<unk>',' ','.','!','?','','','','']
+    
+    for i in range(len(label) // 3) :
+        cho  = label[i*3]
+        jung = label[i*3 + 1] 
+        jong = label[i*3 + 2]
+
+        if (cho == 0) or (jung == 0) or (jong == 0):
+            break
+        if cho >= 20 :
+            text += spe_[cho - 20]
+            continue
+        
+        value = ((cho - 1) * 21 + (jung - 1)) * 28 + (jong - 1) + 0xAC00
         text += chr(value)   
     return text
-    
