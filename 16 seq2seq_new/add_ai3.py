@@ -18,21 +18,15 @@ class Decoder(nn.Module) :
     def __init__(self, vector, max_len) :
         super().__init__()
         self.embedding = nn.Embedding.from_pretrained(vector, freeze = True, padding_idx=0) #벡터화 함수
-        self.rnn = nn.LSTM(vector.shape[1], vector.shape[1], batch_first = True) # RNN 함수
-        self.f = nn.Linear(vector.shape[1], vector.shape[0]) #벡터 값을 다시 단어 라벨값으로 역산하는 함수
+        self.rnn = nn.LSTM(vector.shape[1] , vector.shape[1], batch_first = True, bidirectional=True) # RNN 함수
+        self.f = nn.Linear(vector.shape[1] * 2, vector.shape[0]) #벡터 값을 다시 단어 라벨값으로 역산하는 함수
         self.max_len = max_len #문장 단어의 최대 갯수
     def forward(self, encoder_output, encoder_hc, t = None) :
         decoder_y_list = [] #출력값
 
         decoder_x = torch.zeros((encoder_output.shape[0],1)).type(torch.long).to(encoder_output.device) #첫번째 입력값, 라벨값이기 때문에 차원 = (문장 갯수,1), 문장 갯수는 encoder_output에서 가져옵니다
         #.type(torch.long) 은 형변환, .to(encoder_output.device) 은 기기 배정
-        encoder_h_for = encoder_hc[0][::2]
-        encoder_h_back= encoder_hc[0][1::2]
-        encoder_h = encoder_h_for + encoder_h_back
-        encoder_c_for = encoder_hc[1][::2]
-        encoder_c_back= encoder_hc[1][1::2]
-        encoder_c = encoder_c_for + encoder_c_back
-        decoder_hc = (encoder_h, encoder_c) #첫번째 hc값      
+        decoder_hc = encoder_hc #첫번째 hc값
 
         for i in range(self.max_len) :
             decoder_y, decoder_hc = self.forward_cal(decoder_x, decoder_hc) # RNN 계산 한블록 합니다.
