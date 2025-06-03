@@ -39,13 +39,14 @@ class Decoder(nn.Module) :
         self.max_len = max_len #문장 단어의 최대 갯수
     def forward(self, encoder_output, encoder_hc, t = None) :
         decoder_y_list = [] #출력값
+        weight_list = []
 
         decoder_x = torch.zeros((encoder_output.shape[0],1)).type(torch.long).to(encoder_output.device) #첫번째 입력값, 라벨값이기 때문에 차원 = (문장 갯수,1), 문장 갯수는 encoder_output에서 가져옵니다
         #.type(torch.long) 은 형변환, .to(encoder_output.device) 은 기기 배정
         decoder_hc = encoder_hc #첫번째 hc값
 
         for i in range(self.max_len) :
-            decoder_y, decoder_hc = self.forward_cal(decoder_x, decoder_hc, encoder_output) # RNN 계산 한블록 합니다.
+            decoder_y, decoder_hc, weight = self.forward_cal(decoder_x, decoder_hc, encoder_output) # RNN 계산 한블록 합니다.
 
             if t is not None : #teaching force, t가 존재할 때
                 decoder_x = t[:,i:i+1]  # i번째 t의 단어 가져옴
@@ -53,10 +54,12 @@ class Decoder(nn.Module) :
                 decoder_x = torch.argmax(decoder_y, dim = -1).detach() #출력 값 중에 가장 큰값(라벨값) 가져오고, 해당 값은 미분 대상이 아님 (.detach())
 
             decoder_y_list.append(decoder_y) #출력값에 단어 하나하나 씩 저장
+            weight_list.append(weight)
 
         decoder_y_list = torch.cat(decoder_y_list, dim = 1) #list를 tensor로 묶기 위해서 cat 함수 쓰는 것 decoder_y.shape = (문장 갯수, 단어 갯수(1개), 벡터 갯수)
+        weight_list = torch.cat(weight_list, dim = 1)
         
-        return decoder_y_list, decoder_hc, None # decoder layer 2개 이상 묶어서 쓰기 위해서 hc값과, attention값도 return하기 위해 3개의 return 값
+        return decoder_y_list, decoder_hc, weight_list # decoder layer 2개 이상 묶어서 쓰기 위해서 hc값과, attention값도 return하기 위해 3개의 return 값
     def forward_cal(self, x, hc, encoder_output) : #rnn 블록하나 계산하는 함수
         query_for = hc[0][::2]
         query_back = hc[0][::2]
@@ -67,7 +70,7 @@ class Decoder(nn.Module) :
         x = torch.cat([context, x], dim = -1) # attention 적용    
         x, hc = self.rnn(x, hc) # rnn 계산, hc값은 이전 hc계산 결과, hc값도 따로 입력합니다
         x = self.f(x) # 벡터 계산값 역산해서 다시 라벨로 변환
-        return x, hc
+        return x, hc, weight
         
 class Encoder_n_Decoder(nn.Module) : #encoder와 decoder를 하나로 묶는 새로운 신경망
     def __init__(self, encoder, decoder) :
