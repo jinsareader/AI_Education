@@ -49,7 +49,7 @@ def del_stopword(text : str, stopword : list) :
 #단어-라벨링 사전 생성 함수
 def make_dict(sentences : list, word_dict : dict = None, special_words = ["<pad>", "<unk>"]) :
     data = " ".join(sentences)
-    data = text_preprocess(data).split()
+    data = data.split()
     if word_dict is None :
         word_dict = {}
         for w in special_words :
