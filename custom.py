@@ -47,13 +47,13 @@ def del_stopword(text : str, stopword : list) :
     return text
 
 #단어-라벨링 사전 생성 함수
-def make_dict(sentences : list, word_dict : dict = None) :
+def make_dict(sentences : list, word_dict : dict = None, special_words = ["<pad>", "<unk>"]) :
     data = " ".join(sentences)
     data = text_preprocess(data).split()
     if word_dict is None :
         word_dict = {}
-        word_dict["<pad>"] = 0 #패딩
-        word_dict["<unk>"] = 1 #없는 단어
+        for w in special_words :
+            word_dict[w] = len(word_dict)
     for w in data :
         if w not in word_dict :
             word_dict[w] = len(word_dict)
