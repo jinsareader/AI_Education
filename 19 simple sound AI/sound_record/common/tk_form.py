@@ -3,8 +3,9 @@
 
 import tkinter 
 import process
+import threading
 
-label_prt = {'record' : ("녹음 중", 'green'), 'wait' : ("대기 중", 'gray'), 'cal' : ("계산 중", 'yellow')}
+label_prt = {'record' : ("녹음 중", 'green'), 'wait' : ("대기 중", 'gray'), 'cal' : ("계산 중", 'yellow'), 'play' : ("재생 중", "white")}
 sp = '######################################\n\n'
 
 class MainForm() :
@@ -26,11 +27,14 @@ class MainForm() :
         self.button.grid(row=0,column=0)
         self.label = tkinter.Label(master = self.rightpanel, text = label_prt["wait"][0], background= label_prt["wait"][1], width = 20, height=2)
         self.label.grid(row=0,column=1)
+        self.play_button = tkinter.Button(master = self.rightpanel, text = "재생", width = 30, height= 2, state="disabled")
+        self.play_button.config(command=self.play)
+        self.play_button.grid(row=1,column=0,columnspan=2)
 
         self.window.mainloop()
 
     def record(self) :
-        self.button.config(command = None)
+        self.lock_button()
 
         if not self.record_flg : # 녹음 중이 아니면
             self.record_flg = True
@@ -42,7 +46,7 @@ class MainForm() :
             self.cal() #계산
             self.change_label('wait')
         
-        self.button.config(command = self.record)
+        self.unlock_button()
 
     def cal(self) :
         self.change_label('cal')
@@ -56,9 +60,28 @@ class MainForm() :
         self.text.insert(tkinter.END, sp)
         self.text.config(state = "disabled")
 
+    def play(self) :
+        if self.record_flg :
+            return
+        def _play() :
+            self.p.play()
+            self.change_label('wait')
+            self.unlock_button()            
+        self.lock_button()
+        self.change_label('play')
+        t = threading.Thread(target=_play)
+        t.start()
 
     def change_label(self, state) :
         self.label.config(text = label_prt[state][0], background=label_prt[state][1])
+    def lock_button(self) :
+        self.button.config(state="disabled")
+        self.play_button.config(state="disabled")
+    def unlock_button(self) :
+        self.button.config(state="normal")
+        self.play_button.config(state="normal")
+
+
 
 
 if __name__ == "__main__" : #해당 파일을 직접 실행할 때에만 아래 블록의 코드를 실행 # 단위테스트 용

@@ -34,7 +34,7 @@ class Process() :
 
             while True : #종료 버튼을 누를 때 까지 무한 반복하기 위해서 while : True
                 wf.writeframes(stream.read(CHUNK)) 
-                if not self.record_flg : #종료 버튼을 눌러서 record_flg가 False가 되면 멈춤
+                if self.record_flg == False : #종료 버튼을 눌러서 record_flg가 False가 되면 멈춤
                     break
             # for _ in range(0, RATE // CHUNK * RECORD_SECONDS) :
             #     wf.writeframes(stream.read(CHUNK))
@@ -50,6 +50,23 @@ class Process() :
     def record_end(self) :
         self.record_flg = False
         self.thread.join() #멈출 때까지 기다리기
+
+    def play(self) :
+        CHUNK = 1024
+
+        with wave.open(dr + 'output.wav', 'rb') as wf:
+            p = pyaudio.PyAudio()
+
+            stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                            channels=wf.getnchannels(),
+                            rate=wf.getframerate(),
+                            output=True)
+
+            while len(data := wf.readframes(CHUNK)):  # Requires Python 3.8+ for :=
+                stream.write(data)
+
+            stream.close()
+            p.terminate()
 
     def cal(self) :
         freq, signal = wavfile.read(dr + 'output.wav')
