@@ -1,12 +1,15 @@
+import os
+import IPython
+os.environ['NUMBA_CACHE_DIR'] = IPython.paths.get_ipython_cache_dir()
+
 import wave
 import sys
 
 import pyaudio
 import threading
 import onnxruntime
-from scipy.io import wavfile #음악 파일을 numpy형태로 읽어와서
+import librosa
 import numpy as np #수정
-from python_speech_features import mfcc #mfcc 가공
 
 import os
 dr = os.path.dirname(os.path.abspath(__file__)) + '\\' #절대 경로
@@ -21,7 +24,7 @@ class Process() :
         CHUNK = 1024 #1초 아날로그 소리 신호를 몇개의 단위로 나눠서 디지털로 처리 작업을 하는 단위
         FORMAT = pyaudio.paInt16 #저장 자료형
         CHANNELS = 1 if sys.platform == 'darwin' else 2 #os 환경마다 다르니 지정한것
-        RATE = 8000 #디지털로 나눈 데이터를 저장을 할때 몇개 단위로 나눠서 저장 단위
+        RATE = 16000 #디지털로 나눈 데이터를 저장을 할때 몇개 단위로 나눠서 저장 단위
         # RECORD_SECONDS = 5
 
         with wave.open(dr + 'output.wav', 'wb') as wf :
@@ -69,8 +72,9 @@ class Process() :
             p.terminate()
 
     def cal(self) :
-        freq, signal = wavfile.read(dr + 'output.wav')
-        signal = mfcc(signal, freq) # 2차원 데이터
+        signal, freq = librosa.load(dr + 'output.wav', sr = 16000)
+        signal = librosa.feature.melspectrogram(y=signal, sr=freq, n_mels=32, fmax=8000) # 2차원 데이터
+        signal = signal.transpose(1,0)
         signal = np.expand_dims(signal, 0).astype(np.float32) # 3차원으로 변환
         inputs = {self.F.get_inputs()[0].name : signal}
         outputs = self.F.run(None, inputs)
