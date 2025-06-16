@@ -71,7 +71,7 @@ class Decoder(nn.Module) :
         else :
             query = h.permute(1,0,2)
         if self.num_layers > 1 :
-            query = query.sum(dim=1).unsqueeze(dim=1) # 어텐션에 넣기 위한 h값 가공
+            query = query.sum(dim=1, keepdim=True) # 어텐션에 넣기 위한 h값 가공
 
         x = self.embedding(x)
         embed = x
