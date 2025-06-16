@@ -21,7 +21,7 @@ class PositionEncoding(nn.Module) :
         return self.dropout(x)
     
 class Encoder(nn.Module) :
-    def __init__(self, vector, nhead, out_n, num_layers=2, dim_feedforward=2048, dropout_p = 0.1) : 
+    def __init__(self, vector, nhead, out_n, dim_feedforward=2048, dropout_p = 0.1, num_layers=1) : 
         #d_model : 벡터 크기, nhead : d_model을 attention에서 몇조각으로 나누어서 처리할지(d_model이 nhead로 나누어 떨어져야 함)
         #dim_feedforward : encoderlayer 내부의 선형함수의 중간 처리 벡터 차원 크기 (W의 차원)
         super().__init__()
